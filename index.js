@@ -73,6 +73,7 @@ class Enemy extends Projectile {
 }
 
 const enemies = [];
+const particles = [];
 
 let animationId;
 function animate() {
@@ -85,15 +86,42 @@ function animate() {
 
     projectiles.forEach((projectile) => projectile.update());
 
+    particles.forEach((particle, index) => {
+        if (particle.alpha <= 0) {
+            particles.splice(index, 1);
+        } else {
+            particle.update();
+        }
+    });
+
     enemies.forEach((enemy, enemyIndex) => {
+
         projectiles.forEach((projectile, projectileIndex) => {
             const distance = Math.hypot(
                 projectile.x - enemy.x,
                 projectile.y - enemy.y
             );
             if (distance - projectile.radius - enemy.radius <= 0) {
+                // particles creation
+                for (let i = 0; i < 8; i++) {
+                    particles.push(
+                        new Particle(
+                            projectile.x,
+                            projectile.y,
+                            Math.random() * (3 - 1) + 1,
+                            enemy.color,
+                            {
+                                x: (Math.random() - 0.5) * 3,
+                                y: (Math.random() - 0.5) * 3,
+                            }
+                        )
+                    );
+                }
+
                 if (enemy.radius - 10 > 5) {
-                    enemy.radius -= 10;
+                    gsap.to(enemy, {
+                        radius: enemy.radius - 10,
+                    });
                     setTimeout(() => {
                         projectiles.splice(projectileIndex, 1);
                     }, 0);
@@ -110,9 +138,7 @@ function animate() {
         if (distPlayerEnemy - enemy.radius - player.radius <= 0) {
             cancelAnimationFrame(animationId);
         }
-
         enemy.update();
-
     });
 }
 animate();
@@ -176,10 +202,6 @@ projectiles.forEach((projectile, index) => {
     projectile.update();
 });
 
-gsap.to(enemy, {
-    radius: enemy.radius - 10,
-});
-
 class Particle extends Enemy {
     constructor(x, y, radius, color, velocity) {
         super(x, y, radius, color, velocity);
@@ -204,60 +226,3 @@ class Particle extends Enemy {
     }
 }
 
-player.draw();
-
-particles.forEach((particle, index) => {
-    if (particle.alpha <= 0) {
-        particles.splice(index, 1);
-    } else {
-        particle.update();
-    }
-});
-
-enemies.forEach((enemy, enemyIndex) => {
-
-    projectiles.forEach((projectile, projectileIndex) => {
-        const distance = Math.hypot(
-            projectile.x - enemy.x,
-            projectile.y - enemy.y
-        );
-        if (distance - projectile.radius - enemy.radius <= 0) {
-            // particles creation
-            for (let i = 0; i < 8; i++) {
-                particles.push(
-                    new Particle(
-                        projectile.x,
-                        projectile.y,
-                        Math.random() * (3 - 1) + 1,
-                        enemy.color,
-                        {
-                            x: (Math.random() - 0.5) * 3,
-                            y: (Math.random() - 0.5) * 3,
-                        }
-                    )
-                );
-            }
-
-            if (enemy.radius - 10 > 5) {
-                gsap.to(enemy, {
-                    radius: enemy.radius - 10,
-                });
-                setTimeout(() => {
-                    projectiles.splice(projectileIndex, 1);
-                }, 0);
-            } else {
-                setTimeout(() => {
-                    enemies.splice(enemyIndex, 1);
-                    projectiles.splice(projectileIndex, 1);
-                }, 0);
-            }
-        }
-    });
-
-    const distPlayerEnemy = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-    if (distPlayerEnemy - enemy.radius - player.radius <= 0) {
-        cancelAnimationFrame(animationId);
-    }
-    enemy.update();
-});
-}
